@@ -1,0 +1,4 @@
+Good morning.;Bom dia.;;greeting
+I am learning English.;Eu estou aprendendo ingles.;;study
+Please review this card.;Por favor, revise este cartao.;;instruction
+The train arrives at noon.;O trem chega ao meio-dia.;;travel
