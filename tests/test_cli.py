@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+
 from ankiflow_tts.cli import build_parser, main
 from ankiflow_tts.config import Settings
 from ankiflow_tts.exceptions import ConfigError
@@ -76,3 +79,15 @@ def test_main_returns_zero_for_success(monkeypatch, capsys, tmp_path) -> None:
 
     assert exit_code == 0
     assert "summary output" in captured.out
+
+
+def test_module_execution_prints_help() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "ankiflow_tts.cli", "--help"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "ankiflow-tts" in result.stdout

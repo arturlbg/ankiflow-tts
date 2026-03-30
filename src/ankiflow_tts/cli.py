@@ -96,3 +96,7 @@ def _build_tts_client(settings: Settings) -> GeminiTtsClient | None:
         retry_policy=settings.retry_policy,
         logger=logging.getLogger("ankiflow_tts.tts"),
     )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

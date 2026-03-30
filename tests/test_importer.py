@@ -42,7 +42,7 @@ def test_importer_live_continues_after_row_failures(tmp_path) -> None:
     )
     anki = FakeAnkiClient(
         can_add_results=[True, True, True],
-        store_media_errors=[None, None, AnkiConnectError("upload failed")],
+        store_media_errors=[None, AnkiConnectError("upload failed")],
         note_ids=[101, 102],
     )
     tts = FakeTtsClient(

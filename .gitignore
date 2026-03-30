@@ -9,3 +9,4 @@ build/
 *.log
 docs/
 AGENTS.md
+cli.txt

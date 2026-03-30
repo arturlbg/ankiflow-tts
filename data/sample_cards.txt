@@ -1,4 +1,4 @@
-Good morning.;Bom dia.;;greeting
-I am learning English.;Eu estou aprendendo ingles.;;study
-Please review this card.;Por favor, revise este cartao.;;instruction
-The train arrives at noon.;O trem chega ao meio-dia.;;travel
+Where is the nearest station?;¿Dónde está la estación más cercana?;;spanish
+I enjoy reading books at night.;J'aime lire des livres la nuit.;;french
+Can you help me with this task?;Können Sie mir bei dieser Aufgabe helfen?;;german
+We will meet tomorrow morning.;Ci incontreremo domani mattina.;;italian
