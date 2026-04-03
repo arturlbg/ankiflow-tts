@@ -7,9 +7,9 @@ import time
 
 from .anki_connect import AnkiConnectClient
 from .config import Settings
-from .exceptions import AnkiConnectError, ConfigError, GeminiTtsError
+from .exceptions import AnkiConnectError, ConfigError, TtsGenerationError
 from .parser import parse_input_file
-from .tts_gemini import GeminiTtsClient
+from .tts_deepgram import DeepgramTtsClient
 from .types import CardOutcome, CardOutcomeStatus, CardRow, PreparedNote, RunSummary
 
 
@@ -20,7 +20,7 @@ class Importer:
         self,
         *,
         anki_client: AnkiConnectClient,
-        tts_client: GeminiTtsClient | None,
+        tts_client: DeepgramTtsClient | None,
         logger: logging.Logger | None = None,
     ) -> None:
         self.anki_client = anki_client
@@ -33,8 +33,7 @@ class Importer:
         started_at = time.perf_counter()
         parsed = parse_input_file(
             settings.input_path,
-            gemini_model=settings.gemini_model,
-            gemini_voice=settings.gemini_voice,
+            tts_model=settings.deepgram_model,
         )
 
         summary = RunSummary(
@@ -110,7 +109,7 @@ class Importer:
             return summary
 
         if self.tts_client is None:
-            raise ConfigError("A Gemini TTS client is required for live imports.")
+            raise ConfigError("A Deepgram TTS client is required for live imports.")
 
         for note in eligible_notes:
             self.logger.info(
@@ -123,7 +122,7 @@ class Importer:
                     text=note.fields["SentenceEN"],
                     filename=note.audio_filename,
                 )
-            except GeminiTtsError as exc:
+            except TtsGenerationError as exc:
                 outcome = CardOutcome(
                     line_number=note.line_number,
                     status=CardOutcomeStatus.FAILED_TTS,
@@ -139,7 +138,20 @@ class Importer:
                 continue
 
             try:
-                self.anki_client.store_media_file(audio)
+                stored_filename = self.anki_client.store_media_file(audio)
+                if stored_filename != note.audio_filename:
+                    raise AnkiConnectError(
+                        "AnkiConnect returned an unexpected media filename after upload."
+                    )
+                stored_audio = self.anki_client.retrieve_media_file(note.audio_filename)
+                if not stored_audio:
+                    raise AnkiConnectError(
+                        "Uploaded media could not be verified in Anki."
+                    )
+                if stored_audio != audio.content:
+                    raise AnkiConnectError(
+                        "Uploaded media in Anki does not match the generated audio."
+                    )
             except AnkiConnectError as exc:
                 outcome = CardOutcome(
                     line_number=note.line_number,

@@ -6,7 +6,13 @@ import sys
 from ankiflow_tts.cli import build_parser, main
 from ankiflow_tts.config import Settings
 from ankiflow_tts.exceptions import ConfigError
-from ankiflow_tts.types import CardOutcome, CardOutcomeStatus, RetryPolicy, RunSummary
+from ankiflow_tts.types import (
+    CardOutcome,
+    CardOutcomeStatus,
+    RateLimitPolicy,
+    RetryPolicy,
+    RunSummary,
+)
 
 
 def test_build_parser_accepts_import_command() -> None:
@@ -42,12 +48,12 @@ def test_main_returns_zero_for_success(monkeypatch, capsys, tmp_path) -> None:
         deck_name="Deck",
         model_name="Model",
         anki_url="http://127.0.0.1:8765",
-        gemini_api_key=None,
-        gemini_model=None,
-        gemini_voice=None,
+        deepgram_api_key=None,
+        deepgram_model="aura-2-thalia-en",
         dry_run=True,
         verbose=False,
         retry_policy=RetryPolicy(),
+        rate_limit_policy=RateLimitPolicy(),
     )
     summary = RunSummary(mode="dry-run", input_path=input_path, total_lines=1, valid_rows=1)
     summary.add_outcome(

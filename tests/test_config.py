@@ -4,11 +4,15 @@ from argparse import Namespace
 
 import pytest
 
-from ankiflow_tts.config import DEFAULT_ANKICONNECT_URL, build_settings
+from ankiflow_tts.config import (
+    DEFAULT_ANKICONNECT_URL,
+    DEFAULT_DEEPGRAM_MODEL,
+    build_settings,
+)
 from ankiflow_tts.exceptions import ConfigError
 
 
-def test_build_settings_requires_gemini_for_live_mode(tmp_path) -> None:
+def test_build_settings_requires_deepgram_api_key_for_live_mode(tmp_path) -> None:
     input_path = tmp_path / "cards.txt"
     input_path.write_text("Hello.;Ola.;;note\n", encoding="utf-8")
 
@@ -17,9 +21,8 @@ def test_build_settings_requires_gemini_for_live_mode(tmp_path) -> None:
         deck="Deck",
         model="Model",
         anki_url=None,
-        gemini_api_key=None,
-        gemini_model=None,
-        gemini_voice=None,
+        deepgram_api_key=None,
+        deepgram_model=None,
         dry_run=False,
         verbose=False,
     )
@@ -27,10 +30,10 @@ def test_build_settings_requires_gemini_for_live_mode(tmp_path) -> None:
     with pytest.raises(ConfigError) as exc_info:
         build_settings(args, env={})
 
-    assert "Live imports require Gemini configuration" in str(exc_info.value)
+    assert "Live imports require Deepgram configuration" in str(exc_info.value)
 
 
-def test_build_settings_allows_dry_run_without_gemini(tmp_path) -> None:
+def test_build_settings_allows_dry_run_without_deepgram_api_key(tmp_path) -> None:
     input_path = tmp_path / "cards.txt"
     input_path.write_text("Hello.;Ola.;;note\n", encoding="utf-8")
 
@@ -39,9 +42,8 @@ def test_build_settings_allows_dry_run_without_gemini(tmp_path) -> None:
         deck=None,
         model=None,
         anki_url=None,
-        gemini_api_key=None,
-        gemini_model=None,
-        gemini_voice=None,
+        deepgram_api_key=None,
+        deepgram_model=None,
         dry_run=True,
         verbose=True,
     )
@@ -54,5 +56,7 @@ def test_build_settings_allows_dry_run_without_gemini(tmp_path) -> None:
     assert settings.deck_name == "Deck"
     assert settings.model_name == "Model"
     assert settings.anki_url == DEFAULT_ANKICONNECT_URL
-    assert settings.gemini_api_key is None
+    assert settings.deepgram_api_key is None
+    assert settings.deepgram_model == DEFAULT_DEEPGRAM_MODEL
     assert settings.verbose is True
+    assert settings.rate_limit_policy.minimum_interval_s == 1.0

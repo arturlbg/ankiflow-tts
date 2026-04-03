@@ -94,6 +94,23 @@ class AnkiConnectClient:
             )
         )
 
+    def retrieve_media_file(self, filename: str) -> bytes:
+        """Read back media bytes from Anki for verification."""
+
+        result = self._invoke("retrieveMediaFile", {"filename": filename})
+        if result in (None, False, ""):
+            return b""
+        if not isinstance(result, str):
+            raise AnkiConnectError(
+                "AnkiConnect returned an unexpected retrieveMediaFile payload."
+            )
+        try:
+            return base64.b64decode(result, validate=True)
+        except (ValueError, base64.binascii.Error) as exc:
+            raise AnkiConnectError(
+                "AnkiConnect returned invalid media data for retrieveMediaFile."
+            ) from exc
+
     def add_note(self, note: PreparedNote) -> int:
         """Create one note in Anki."""
 

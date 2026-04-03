@@ -12,8 +12,7 @@ from .types import CardOutcome, CardOutcomeStatus, CardRow, ParsedInput
 def parse_input_file(
     input_path: Path,
     *,
-    gemini_model: str | None,
-    gemini_voice: str | None,
+    tts_model: str | None,
 ) -> ParsedInput:
     """Parse an input file and detect duplicates before any network work."""
 
@@ -76,8 +75,7 @@ def parse_input_file(
                 duplicate_key=normalize_duplicate_key(sentence_en),
                 audio_filename=build_audio_filename(
                     sentence_en,
-                    gemini_model,
-                    gemini_voice,
+                    tts_model,
                 ),
             )
         )

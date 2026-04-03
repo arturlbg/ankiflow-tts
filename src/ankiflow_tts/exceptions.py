@@ -22,8 +22,8 @@ class AnkiConnectError(AnkiFlowError):
     """Raised when AnkiConnect is unavailable or returns an error."""
 
 
-class GeminiTtsError(AnkiFlowError):
-    """Raised when Gemini TTS generation fails."""
+class TtsGenerationError(AnkiFlowError):
+    """Raised when provider TTS generation fails."""
 
     def __init__(
         self,

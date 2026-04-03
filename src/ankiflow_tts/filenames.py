@@ -20,17 +20,14 @@ def normalize_duplicate_key(text: str) -> str:
 
 def build_audio_filename(
     sentence_en: str,
-    gemini_model: str | None,
-    gemini_voice: str | None,
+    tts_model: str | None,
     *,
     max_slug_length: int = 40,
 ) -> str:
-    """Create a deterministic WAV filename for a sentence and voice settings."""
+    """Create a deterministic WAV filename for a sentence and TTS model."""
 
     slug = _slugify(sentence_en, max_slug_length=max_slug_length)
-    hash_input = "|".join(
-        [normalize_duplicate_key(sentence_en), gemini_model or "", gemini_voice or ""]
-    )
+    hash_input = "|".join([normalize_duplicate_key(sentence_en), tts_model or ""])
     digest = hashlib.sha1(hash_input.encode("utf-8")).hexdigest()[:10]
     return f"{slug}-{digest}.wav"
 

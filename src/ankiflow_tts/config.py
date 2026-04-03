@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from .exceptions import ConfigError
-from .types import RetryPolicy
+from .types import RateLimitPolicy, RetryPolicy
 
 DEFAULT_ANKICONNECT_URL = "http://127.0.0.1:8765"
+DEFAULT_DEEPGRAM_MODEL = "aura-2-thalia-en"
 
 
 @dataclass(slots=True, frozen=True)
@@ -21,12 +22,12 @@ class Settings:
     deck_name: str
     model_name: str
     anki_url: str
-    gemini_api_key: str | None
-    gemini_model: str | None
-    gemini_voice: str | None
+    deepgram_api_key: str | None
+    deepgram_model: str
     dry_run: bool
     verbose: bool
     retry_policy: RetryPolicy
+    rate_limit_policy: RateLimitPolicy
 
 
 def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
@@ -64,30 +65,25 @@ def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
     dry_run = bool(getattr(args, "dry_run", False))
     verbose = bool(getattr(args, "verbose", False))
 
-    gemini_api_key = _choose_value(
-        getattr(args, "gemini_api_key", None),
-        env_values.get("GEMINI_API_KEY"),
+    deepgram_api_key = _choose_value(
+        getattr(args, "deepgram_api_key", None),
+        env_values.get("DEEPGRAM_API_KEY"),
     )
-    gemini_model = _choose_value(
-        getattr(args, "gemini_model", None),
-        env_values.get("GEMINI_MODEL"),
-    )
-    gemini_voice = _choose_value(
-        getattr(args, "gemini_voice", None),
-        env_values.get("GEMINI_VOICE"),
+    deepgram_model = (
+        _choose_value(
+            getattr(args, "deepgram_model", None),
+            env_values.get("DEEPGRAM_MODEL"),
+        )
+        or DEFAULT_DEEPGRAM_MODEL
     )
 
     if not dry_run:
         missing = []
-        if gemini_api_key is None:
-            missing.append("GEMINI_API_KEY or --gemini-api-key")
-        if gemini_model is None:
-            missing.append("GEMINI_MODEL or --gemini-model")
-        if gemini_voice is None:
-            missing.append("GEMINI_VOICE or --gemini-voice")
+        if deepgram_api_key is None:
+            missing.append("DEEPGRAM_API_KEY or --deepgram-api-key")
         if missing:
             raise ConfigError(
-                "Live imports require Gemini configuration: " + ", ".join(missing)
+                "Live imports require Deepgram configuration: " + ", ".join(missing)
             )
 
     return Settings(
@@ -95,12 +91,12 @@ def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
         deck_name=deck_name,
         model_name=model_name,
         anki_url=anki_url.rstrip("/"),
-        gemini_api_key=gemini_api_key,
-        gemini_model=gemini_model,
-        gemini_voice=gemini_voice,
+        deepgram_api_key=deepgram_api_key,
+        deepgram_model=deepgram_model,
         dry_run=dry_run,
         verbose=verbose,
         retry_policy=RetryPolicy(),
+        rate_limit_policy=RateLimitPolicy(),
     )
 
 

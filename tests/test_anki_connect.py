@@ -71,6 +71,17 @@ def test_store_media_file_sends_base64_payload() -> None:
     assert isinstance(calls[0][1]["data"], str)
 
 
+def test_retrieve_media_file_decodes_base64_payload() -> None:
+    client = AnkiConnectClient(
+        "http://127.0.0.1:8765",
+        transport=lambda action, params: "AAE=" if action == "retrieveMediaFile" else 6,
+    )
+
+    data = client.retrieve_media_file("hello.wav")
+
+    assert data == b"\x00\x01"
+
+
 def _transport(responses: dict[str, object]):
     def transport(action: str, params: dict[str, object]) -> object:
         _ = params

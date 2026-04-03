@@ -1,4 +1,32 @@
-Where is the nearest station?;¿Dónde está la estación más cercana?;;spanish
-I enjoy reading books at night.;J'aime lire des livres la nuit.;;french
-Can you help me with this task?;Können Sie mir bei dieser Aufgabe helfen?;;german
-We will meet tomorrow morning.;Ci incontreremo domani mattina.;;italian
+Can you reprimand him, please?;Você pode repreendê-lo, por favor?;;reprimand = repreender
+So you can't say for sure whether it's gonna be us or them, can you?;Então você não pode dizer com certeza se serão nós ou eles, pode?;;whether = se / gonna = going to
+She will prepare a fruit salad for dessert.;Ela vai preparar uma salada de frutas para a sobremesa.;;dessert = sobremesa
+I eat dessert least often in the week.;Eu como sobremesa com menos frequência durante a semana.;;least often = com menos frequência
+Corporate has deemed it appropriate to enforce an ultimatum upon me. And Jan is thinking about downsizing.;A empresa considerou apropriado impor um ultimato a mim. E a Jan está pensando em reduzir o quadro de funcionários.;;deemed = considerou / downsizing = redução de pessoal
+He garners respect for his honesty.;Ele conquista respeito por sua honestidade.;;garner = conquistar / obter
+She garners friends with her kindness.;Ela conquista amigos com sua gentileza.;;garner = conquistar
+If you are unhappy with your compensation, maybe you should take it up with HR.;Se você está insatisfeito com sua remuneração, talvez devesse tratar disso com o RH.;;take it up with = levar a alguém
+I even brought it up in my interview.;Eu até mencionei isso na minha entrevista.;;bring up = mencionar
+The arrow pierced the target accurately.;A flecha perfurou o alvo com precisão.;;pierce = perfurar
+The needle pierces the skin smoothly.;A agulha perfura a pele suavemente.;;pierce = perfurar
+There are four of them there, nice animals that are mostly passive and peaceful.;Há quatro deles ali, animais tranquilos que são em sua maioria passivos e pacíficos.;;mostly = na maioria
+The deal, financed mostly with cash, is expected to close in the second quarter.;O acordo, financiado principalmente em dinheiro, deve ser concluído no segundo trimestre.;;close (deal) = concluir
+I'm sort of a student of comedy.;Eu sou meio que um estudante de comédia.;;sort of = meio que
+Do you mind helping me with this task?;Você se importa em me ajudar com essa tarefa?;;do you mind + ing
+Do you mind opening the window?;Você se importa de abrir a janela?;;do you mind + ing
+Do you mind if I use your phone?;Você se importa se eu usar seu telefone?;;do you mind if
+She could have expressed her concerns more clearly during the meeting.;Ela poderia ter expressado suas preocupações com mais clareza durante a reunião.;;could have = poderia ter
+I have no concern about my exam.;Eu não tenho preocupação com minha prova.;;concern = preocupação
+Although tired, she finished her project.;Embora cansada, ela terminou seu projeto.;;although = embora
+Although she is tired, she smiles.;Embora ela esteja cansada, ela sorri.;;although = embora
+Although it is raining, I go outside.;Embora esteja chovendo, eu saio.;;although = embora
+You know, whether we can supply papers to them.;Sabe, se podemos fornecer documentos a eles.;;whether = se
+I think that pretty much sums it up.;Eu acho que isso resume bem a situação.;;sum up = resumir
+And you get the best out of us.;E você tira o melhor de nós.;;get the best out of = extrair o melhor
+If you think she is cute now, you should have seen her a couple of years ago.;Se você acha que ela é bonita agora, deveria tê-la visto há alguns anos.;;should have seen = deveria ter visto
+So this is my kingdom, as far as the eye can see.;Então este é o meu reino, até onde a vista alcança.;;as far as the eye can see
+He offers guidance to new students.;Ele oferece orientação a novos alunos.;;guidance = orientação
+She needs guidance for her project.;Ela precisa de orientação para o projeto dela.;;guidance = orientação
+We decided to part ways.;Decidimos seguir caminhos diferentes.;;part ways = separar-se
+It’s hard to part from old habits.;É difícil se separar de velhos hábitos.;;part from = separar-se
+He refused to part with his money.;Ele se recusou a abrir mão do dinheiro.;;part with = abrir mão

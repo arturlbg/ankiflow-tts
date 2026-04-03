@@ -12,7 +12,7 @@ from .config import Settings, build_settings
 from .exceptions import AnkiFlowError, ParseError
 from .importer import Importer
 from .reporting import render_parse_error, render_summary
-from .tts_gemini import GeminiTtsClient
+from .tts_deepgram import DeepgramTtsClient
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     import_parser = subparsers.add_parser(
         "import",
-        help="Import a text file into Anki with Gemini-generated audio.",
+        help="Import a text file into Anki with Deepgram-generated audio.",
     )
     import_parser.add_argument(
         "--input",
@@ -34,9 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
     import_parser.add_argument("--deck", help="Target Anki deck name.")
     import_parser.add_argument("--model", help="Target Anki note type.")
     import_parser.add_argument("--anki-url", help="AnkiConnect base URL.")
-    import_parser.add_argument("--gemini-api-key", help="Gemini API key override.")
-    import_parser.add_argument("--gemini-model", help="Gemini TTS model override.")
-    import_parser.add_argument("--gemini-voice", help="Gemini TTS voice override.")
+    import_parser.add_argument("--deepgram-api-key", help="Deepgram API key override.")
+    import_parser.add_argument(
+        "--deepgram-model",
+        help="Deepgram TTS model override. Defaults to aura-2-thalia-en.",
+    )
     import_parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -86,14 +88,14 @@ def configure_logging(settings: Settings) -> None:
     )
 
 
-def _build_tts_client(settings: Settings) -> GeminiTtsClient | None:
+def _build_tts_client(settings: Settings) -> DeepgramTtsClient | None:
     if settings.dry_run:
         return None
-    return GeminiTtsClient(
-        api_key=settings.gemini_api_key or "",
-        model=settings.gemini_model or "",
-        voice=settings.gemini_voice or "",
+    return DeepgramTtsClient(
+        api_key=settings.deepgram_api_key or "",
+        model=settings.deepgram_model,
         retry_policy=settings.retry_policy,
+        rate_limit_policy=settings.rate_limit_policy,
         logger=logging.getLogger("ankiflow_tts.tts"),
     )
 

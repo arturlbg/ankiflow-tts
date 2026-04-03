@@ -18,6 +18,13 @@ class RetryPolicy:
     jitter: str = "full"
 
 
+@dataclass(slots=True, frozen=True)
+class RateLimitPolicy:
+    """Configuration for fixed-rate request throttling."""
+
+    minimum_interval_s: float = 1.0
+
+
 class CardOutcomeStatus(str, Enum):
     """Possible per-card results."""
 

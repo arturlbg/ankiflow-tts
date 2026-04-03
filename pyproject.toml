@@ -5,12 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ankiflow-tts"
 version = "0.1.0"
-description = "CLI importer that generates Gemini TTS audio and creates Anki notes."
+description = "CLI importer that generates Deepgram TTS audio and creates Anki notes."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "google-genai>=1.12.1",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [

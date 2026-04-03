@@ -21,8 +21,7 @@ def test_parse_input_file_returns_rows_and_input_duplicates(tmp_path) -> None:
 
     parsed = parse_input_file(
         input_path,
-        gemini_model="model-a",
-        gemini_voice="voice-a",
+        tts_model="model-a",
     )
 
     assert parsed.total_lines == 3
@@ -48,7 +47,7 @@ def test_parse_input_file_reports_all_malformed_lines(tmp_path) -> None:
     )
 
     with pytest.raises(ParseError) as exc_info:
-        parse_input_file(input_path, gemini_model="model-a", gemini_voice="voice-a")
+        parse_input_file(input_path, tts_model="model-a")
 
     issues = exc_info.value.issues
     assert [issue.line_number for issue in issues] == [2, 3, 4]
@@ -60,8 +59,7 @@ def test_parse_input_file_handles_utf8_bom(tmp_path) -> None:
 
     parsed = parse_input_file(
         input_path,
-        gemini_model="model-a",
-        gemini_voice="voice-a",
+        tts_model="model-a",
     )
 
     assert parsed.unique_rows[0].sentence_en == "Hello."
