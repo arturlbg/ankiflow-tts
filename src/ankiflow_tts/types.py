@@ -42,11 +42,17 @@ class CardRow:
     """A validated row from the input file."""
 
     line_number: int
-    sentence_en: str
-    translation_pt: str
-    notes: str
+    tts_text: str
+    fields: dict[str, str]
+    audio_field_name: str | None
     duplicate_key: str
-    audio_filename: str
+    audio_filename: str | None
+
+    @property
+    def sentence_en(self) -> str:
+        """Backward-compatible name for the primary English text."""
+
+        return self.tts_text
 
 
 @dataclass(slots=True, frozen=True)
@@ -57,7 +63,8 @@ class PreparedNote:
     deck_name: str
     model_name: str
     fields: dict[str, str]
-    audio_filename: str
+    audio_filename: str | None
+    tts_text: str = ""
 
     def as_anki_note(self) -> dict[str, object]:
         """Convert the note to the AnkiConnect payload shape."""
@@ -98,6 +105,8 @@ class CardOutcome:
 class ParsedInput:
     """Result of parsing and deduplicating an input file."""
 
+    deck_name: str
+    model_name: str
     total_lines: int
     valid_rows: int
     unique_rows: tuple[CardRow, ...]

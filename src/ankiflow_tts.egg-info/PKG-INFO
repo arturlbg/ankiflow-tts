@@ -1,3 +1,12 @@
+Metadata-Version: 2.4
+Name: ankiflow-tts
+Version: 0.1.0
+Summary: CLI importer that generates Deepgram TTS audio and creates Anki notes.
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+
 # ankiflow-tts
 
 `ankiflow-tts` is a Python CLI that reads cards from text files in `data`, generates Deepgram TTS audio for each English target sentence, uploads the audio to Anki through AnkiConnect, and creates notes in the deck/model declared by each file.

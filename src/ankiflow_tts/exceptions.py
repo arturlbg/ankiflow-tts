@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 
 class AnkiFlowError(Exception):
@@ -48,11 +49,17 @@ class ParseIssue:
 class ParseError(AnkiFlowError):
     """Raised when the input file contains malformed rows."""
 
-    def __init__(self, issues: Sequence[ParseIssue], total_lines: int) -> None:
+    def __init__(
+        self,
+        issues: Sequence[ParseIssue],
+        total_lines: int,
+        input_path: Path | None = None,
+    ) -> None:
         if not issues:
             raise ValueError("ParseError requires at least one issue.")
         self.issues = tuple(issues)
         self.total_lines = total_lines
+        self.input_path = input_path
         summary = ", ".join(
             f"line {issue.line_number}: {issue.message}" for issue in self.issues
         )

@@ -23,6 +23,14 @@ def test_build_parser_accepts_import_command() -> None:
     assert args.dry_run is True
 
 
+def test_build_parser_allows_sample_import_without_input() -> None:
+    args = build_parser().parse_args(["import", "--dry-run"])
+
+    assert args.command == "import"
+    assert args.input_path is None
+    assert args.dry_run is True
+
+
 def test_main_returns_error_code_for_application_error(monkeypatch, capsys, tmp_path) -> None:
     input_path = tmp_path / "cards.txt"
     input_path.write_text("Hello.;Ola.;;note\n", encoding="utf-8")
@@ -31,7 +39,7 @@ def test_main_returns_error_code_for_application_error(monkeypatch, capsys, tmp_
         _ = args
         raise ConfigError("boom")
 
-    monkeypatch.setattr("ankiflow_tts.cli.build_settings", raise_config_error)
+    monkeypatch.setattr("ankiflow_tts.cli.build_import_settings", raise_config_error)
 
     exit_code = main(["import", "--input", str(input_path), "--dry-run"])
     captured = capsys.readouterr()
@@ -64,7 +72,7 @@ def test_main_returns_zero_for_success(monkeypatch, capsys, tmp_path) -> None:
         )
     )
 
-    monkeypatch.setattr("ankiflow_tts.cli.build_settings", lambda args: settings)
+    monkeypatch.setattr("ankiflow_tts.cli.build_import_settings", lambda args: (settings,))
     monkeypatch.setattr("ankiflow_tts.cli.configure_logging", lambda settings: None)
     monkeypatch.setattr("ankiflow_tts.cli.AnkiConnectClient", lambda url: object())
     monkeypatch.setattr("ankiflow_tts.cli._build_tts_client", lambda settings: None)
@@ -73,18 +81,29 @@ def test_main_returns_zero_for_success(monkeypatch, capsys, tmp_path) -> None:
         def __init__(self, **kwargs) -> None:
             self.kwargs = kwargs
 
-        def run(self, settings_arg):
-            assert settings_arg is settings
-            return summary
+        def run_many(self, settings_arg):
+            assert settings_arg == (settings,)
+            return (summary,)
 
     monkeypatch.setattr("ankiflow_tts.cli.Importer", FakeImporter)
-    monkeypatch.setattr("ankiflow_tts.cli.render_summary", lambda result: "summary output")
+    monkeypatch.setattr("ankiflow_tts.cli.render_summaries", lambda result: "summary output")
 
     exit_code = main(["import", "--input", str(input_path), "--dry-run"])
     captured = capsys.readouterr()
 
     assert exit_code == 0
     assert "summary output" in captured.out
+
+
+def test_main_returns_zero_when_sample_import_has_no_jobs(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("ankiflow_tts.cli.build_import_settings", lambda args: ())
+    monkeypatch.setattr("ankiflow_tts.cli.configure_logging", lambda settings: None)
+
+    exit_code = main(["import", "--dry-run"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "No cards to import" in captured.out
 
 
 def test_module_execution_prints_help() -> None:

@@ -11,9 +11,6 @@ from collections.abc import Callable, Sequence
 from .exceptions import AnkiConnectError, ValidationError
 from .types import AudioPayload, PreparedNote
 
-REQUIRED_FIELDS = ("SentenceEN", "TranslationPT", "AudioEN", "Notes")
-
-
 class AnkiConnectClient:
     """Thin client for the AnkiConnect HTTP API."""
 
@@ -32,7 +29,14 @@ class AnkiConnectClient:
         version = self._invoke("version", {})
         return int(version)
 
-    def validate_target(self, deck_name: str, model_name: str) -> None:
+    def validate_target(
+        self,
+        deck_name: str,
+        model_name: str,
+        *,
+        required_fields: tuple[str, ...],
+        first_field: str,
+    ) -> None:
         """Ensure the deck, model, and fields exist before mutating Anki."""
 
         self.check_connection()
@@ -46,16 +50,16 @@ class AnkiConnectClient:
             raise ValidationError(f"Anki model does not exist: {model_name}")
 
         fields = self.get_model_field_names(model_name)
-        missing_fields = [field for field in REQUIRED_FIELDS if field not in fields]
+        missing_fields = [field for field in required_fields if field not in fields]
         if missing_fields:
             raise ValidationError(
                 f"Anki model '{model_name}' is missing required fields: "
                 + ", ".join(missing_fields)
             )
 
-        if not fields or fields[0] != "SentenceEN":
+        if not fields or fields[0] != first_field:
             raise ValidationError(
-                f"Anki model '{model_name}' must use SentenceEN as the first field."
+                f"Anki model '{model_name}' must use {first_field} as the first field."
             )
 
     def get_deck_names(self) -> list[str]:

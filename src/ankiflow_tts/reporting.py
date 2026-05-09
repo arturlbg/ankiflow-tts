@@ -10,6 +10,8 @@ def render_parse_error(error: ParseError) -> str:
     """Render parse failures with line numbers."""
 
     lines = ["Input validation failed:"]
+    if error.input_path is not None:
+        lines.append(f"File: {error.input_path}")
     for issue in error.issues:
         lines.append(f"- line {issue.line_number}: {issue.message}")
     return "\n".join(lines)
@@ -51,3 +53,9 @@ def render_summary(summary: RunSummary) -> str:
             )
 
     return "\n".join(lines)
+
+
+def render_summaries(summaries: tuple[RunSummary, ...]) -> str:
+    """Render one or more import summaries."""
+
+    return "\n\n".join(render_summary(summary) for summary in summaries)

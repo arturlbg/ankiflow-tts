@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .exceptions import ParseError, ParseIssue
 from .filenames import build_audio_filename, normalize_duplicate_key
+from .schemas import NoteSchema, get_schema
 from .types import CardOutcome, CardOutcomeStatus, CardRow, ParsedInput
 
 
@@ -20,68 +21,108 @@ def parse_input_file(
     issues: list[ParseIssue] = []
     parsed_rows: list[CardRow] = []
 
-    for line_number, raw_line in enumerate(raw_lines, start=1):
-        if not raw_line.strip():
-            continue
-
-        parts = raw_line.split(";")
-        if len(parts) != 4:
-            issues.append(
+    if len(raw_lines) < 2:
+        raise ParseError(
+            issues=[
                 ParseIssue(
-                    line_number=line_number,
-                    message="Expected exactly four semicolon-separated fields.",
+                    line_number=1,
+                    message="Input file must start with deck name and model name lines.",
                 )
-            )
-            continue
+            ],
+            total_lines=len(raw_lines),
+            input_path=input_path,
+        )
 
-        sentence_en = parts[0].strip()
-        translation_pt = parts[1].strip()
-        third_field = parts[2]
-        notes = parts[3].strip()
+    deck_name = raw_lines[0].strip()
+    model_name = raw_lines[1].strip()
 
-        if third_field != "":
-            issues.append(
-                ParseIssue(
-                    line_number=line_number,
-                    message="The third field must be empty.",
-                )
-            )
-            continue
+    if not deck_name:
+        issues.append(ParseIssue(line_number=1, message="Deck name must not be empty."))
+    if not model_name:
+        issues.append(ParseIssue(line_number=2, message="Model name must not be empty."))
 
-        if not sentence_en:
-            issues.append(
-                ParseIssue(
-                    line_number=line_number,
-                    message="SentenceEN must not be empty.",
-                )
-            )
-            continue
-
-        if not translation_pt:
-            issues.append(
-                ParseIssue(
-                    line_number=line_number,
-                    message="TranslationPT must not be empty.",
-                )
-            )
-            continue
-
-        parsed_rows.append(
-            CardRow(
-                line_number=line_number,
-                sentence_en=sentence_en,
-                translation_pt=translation_pt,
-                notes=notes,
-                duplicate_key=normalize_duplicate_key(sentence_en),
-                audio_filename=build_audio_filename(
-                    sentence_en,
-                    tts_model,
-                ),
+    schema = get_schema(model_name) if model_name else None
+    if model_name and schema is None:
+        issues.append(
+            ParseIssue(
+                line_number=2,
+                message=f"Unsupported Anki model for import: {model_name}",
             )
         )
 
     if issues:
-        raise ParseError(issues=issues, total_lines=len(raw_lines))
+        raise ParseError(issues=issues, total_lines=len(raw_lines), input_path=input_path)
+
+    assert schema is not None
+
+    for line_number, raw_line in enumerate(raw_lines[2:], start=3):
+        if not raw_line.strip():
+            continue
+
+        parts = _split_model_row(raw_line, schema)
+        if parts is None:
+            issues.append(
+                ParseIssue(
+                    line_number=line_number,
+                    message=(
+                        "Expected at least "
+                        f"{len(schema.field_names)} semicolon-separated fields "
+                        f"for model '{model_name}'."
+                    ),
+                )
+            )
+            continue
+
+        fields = {
+            field_name: field_value.strip()
+            for field_name, field_value in zip(schema.field_names, parts, strict=True)
+        }
+        if schema.audio_field is not None:
+            audio_value = fields[schema.audio_field]
+            if audio_value:
+                issues.append(
+                    ParseIssue(
+                        line_number=line_number,
+                        message=f"The audio field '{schema.audio_field}' must be empty.",
+                    )
+                )
+                continue
+
+        missing_required_fields = [
+            field_name
+            for field_name in schema.required_non_empty_fields
+            if not fields[field_name]
+        ]
+        if missing_required_fields:
+            issues.append(
+                ParseIssue(
+                    line_number=line_number,
+                    message=f"{missing_required_fields[0]} must not be empty.",
+                )
+            )
+            continue
+
+        tts_text = fields[schema.tts_field] if schema.tts_field is not None else ""
+        audio_filename = (
+            build_audio_filename(tts_text, tts_model)
+            if schema.requires_audio and tts_text
+            else None
+        )
+        duplicate_source = fields[schema.duplicate_field]
+
+        parsed_rows.append(
+            CardRow(
+                line_number=line_number,
+                tts_text=tts_text,
+                fields=fields,
+                audio_field_name=schema.audio_field,
+                duplicate_key=normalize_duplicate_key(duplicate_source),
+                audio_filename=audio_filename,
+            )
+        )
+
+    if issues:
+        raise ParseError(issues=issues, total_lines=len(raw_lines), input_path=input_path)
 
     seen_lines: dict[str, int] = {}
     unique_rows: list[CardRow] = []
@@ -98,13 +139,25 @@ def parse_input_file(
             CardOutcome(
                 line_number=row.line_number,
                 status=CardOutcomeStatus.SKIPPED_INPUT_DUPLICATE,
-                message=f"Duplicate SentenceEN already appeared on line {first_line}.",
+                message=f"Duplicate target text already appeared on line {first_line}.",
             )
         )
 
     return ParsedInput(
+        deck_name=deck_name,
+        model_name=model_name,
         total_lines=len(raw_lines),
         valid_rows=len(parsed_rows),
         unique_rows=tuple(unique_rows),
         duplicate_outcomes=tuple(duplicate_outcomes),
     )
+
+
+def _split_model_row(raw_line: str, schema: NoteSchema) -> list[str] | None:
+    parts = raw_line.split(";")
+    field_count = len(schema.field_names)
+    if len(parts) < field_count:
+        return None
+    if len(parts) > field_count:
+        return parts[: field_count - 1] + [";".join(parts[field_count - 1 :])]
+    return parts

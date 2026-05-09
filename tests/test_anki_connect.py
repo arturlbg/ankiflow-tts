@@ -16,7 +16,12 @@ def test_validate_target_checks_fields_and_first_field() -> None:
     }
     client = AnkiConnectClient("http://127.0.0.1:8765", transport=_transport(responses))
 
-    client.validate_target("Deck", "Model")
+    client.validate_target(
+        "Deck",
+        "Model",
+        required_fields=("SentenceEN", "TranslationPT", "AudioEN", "Notes"),
+        first_field="SentenceEN",
+    )
 
 
 def test_validate_target_rejects_wrong_first_field() -> None:
@@ -29,7 +34,61 @@ def test_validate_target_rejects_wrong_first_field() -> None:
     client = AnkiConnectClient("http://127.0.0.1:8765", transport=_transport(responses))
 
     with pytest.raises(ValidationError):
-        client.validate_target("Deck", "Model")
+        client.validate_target(
+            "Deck",
+            "Model",
+            required_fields=("SentenceEN", "TranslationPT", "AudioEN", "Notes"),
+            first_field="SentenceEN",
+        )
+
+
+def test_validate_target_supports_tag_note_type_fields() -> None:
+    responses = {
+        "version": 6,
+        "deckNames": ["Grammar"],
+        "modelNames": ["TagNoteType"],
+        "modelFieldNames": [
+            "Target English",
+            "Portuguese",
+            "Audio",
+            "Usage Notes",
+            "Extra Examples",
+            "Production Prompt",
+            "Tags / Pattern",
+        ],
+    }
+    client = AnkiConnectClient("http://127.0.0.1:8765", transport=_transport(responses))
+
+    client.validate_target(
+        "Grammar",
+        "TagNoteType",
+        required_fields=tuple(responses["modelFieldNames"]),
+        first_field="Target English",
+    )
+
+
+def test_validate_target_supports_chunk_fields() -> None:
+    responses = {
+        "version": 6,
+        "deckNames": ["Speaking Chunks"],
+        "modelNames": ["Chunk"],
+        "modelFieldNames": [
+            "Question",
+            "Target Chunk",
+            "Task",
+            "Example Answer",
+            "Useful Vocabulary",
+            "Notes",
+        ],
+    }
+    client = AnkiConnectClient("http://127.0.0.1:8765", transport=_transport(responses))
+
+    client.validate_target(
+        "Speaking Chunks",
+        "Chunk",
+        required_fields=tuple(responses["modelFieldNames"]),
+        first_field="Question",
+    )
 
 
 def test_can_add_notes_requires_one_result_per_note() -> None:

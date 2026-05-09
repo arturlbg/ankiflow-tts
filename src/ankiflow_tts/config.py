@@ -8,10 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from .exceptions import ConfigError
+from .schemas import get_schema
 from .types import RateLimitPolicy, RetryPolicy
 
 DEFAULT_ANKICONNECT_URL = "http://127.0.0.1:8765"
 DEFAULT_DEEPGRAM_MODEL = "aura-2-thalia-en"
+DEFAULT_IMPORT_DIR = Path("data")
 
 
 @dataclass(slots=True, frozen=True)
@@ -30,6 +32,39 @@ class Settings:
     rate_limit_policy: RateLimitPolicy
 
 
+def build_import_settings(args: Any, env: dict[str, str] | None = None) -> tuple[Settings, ...]:
+    """Build one or more import jobs from CLI arguments and environment variables."""
+
+    env_values = dict(environ if env is None else env)
+    input_value = _clean(getattr(args, "input_path", None))
+    if input_value:
+        return (build_settings(args, env=env_values),)
+
+    jobs: list[Settings] = []
+    if not DEFAULT_IMPORT_DIR.exists():
+        return ()
+
+    for input_path in sorted(DEFAULT_IMPORT_DIR.glob("*.txt")):
+        if not input_path.exists():
+            continue
+        if not input_path.is_file():
+            raise ConfigError(f"Import input path is not a file: {input_path}")
+        if _input_file_is_blank(input_path):
+            continue
+
+        jobs.append(
+            _build_settings(
+                input_path=input_path,
+                deck_name="",
+                model_name="",
+                args=args,
+                env_values=env_values,
+            )
+        )
+
+    return tuple(jobs)
+
+
 def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
     """Build validated settings from CLI arguments and environment variables."""
 
@@ -45,17 +80,23 @@ def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
     if not input_path.is_file():
         raise ConfigError(f"Input path is not a file: {input_path}")
 
-    deck_name = _choose_value(getattr(args, "deck", None), env_values.get("DEFAULT_DECK"))
-    if deck_name is None:
-        raise ConfigError("A target deck is required via --deck or DEFAULT_DECK.")
-
-    model_name = _choose_value(
-        getattr(args, "model", None),
-        env_values.get("DEFAULT_MODEL"),
+    return _build_settings(
+        input_path=input_path,
+        deck_name=_choose_value(getattr(args, "deck", None)) or "",
+        model_name=_choose_value(getattr(args, "model", None)) or "",
+        args=args,
+        env_values=env_values,
     )
-    if model_name is None:
-        raise ConfigError("A target model is required via --model or DEFAULT_MODEL.")
 
+
+def _build_settings(
+    *,
+    input_path: Path,
+    deck_name: str,
+    model_name: str,
+    args: Any,
+    env_values: dict[str, str],
+) -> Settings:
     anki_url = _choose_value(
         getattr(args, "anki_url", None),
         env_values.get("ANKICONNECT_URL"),
@@ -77,7 +118,7 @@ def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
         or DEFAULT_DEEPGRAM_MODEL
     )
 
-    if not dry_run:
+    if not dry_run and _input_requires_audio(input_path):
         missing = []
         if deepgram_api_key is None:
             missing.append("DEEPGRAM_API_KEY or --deepgram-api-key")
@@ -98,6 +139,22 @@ def build_settings(args: Any, env: dict[str, str] | None = None) -> Settings:
         retry_policy=RetryPolicy(),
         rate_limit_policy=RateLimitPolicy(),
     )
+
+
+def _input_file_is_blank(input_path: Path) -> bool:
+    return not any(
+        line.strip()
+        for line in input_path.read_text(encoding="utf-8-sig").splitlines()
+    )
+
+
+def _input_requires_audio(input_path: Path) -> bool:
+    lines = input_path.read_text(encoding="utf-8-sig").splitlines()
+    if len(lines) < 2:
+        return False
+    model_name = lines[1].strip()
+    schema = get_schema(model_name) if model_name else None
+    return bool(schema and schema.requires_audio)
 
 
 def _choose_value(*values: object) -> str | None:
