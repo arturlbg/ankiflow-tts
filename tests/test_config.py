@@ -99,6 +99,38 @@ def test_build_settings_allows_live_chunk_without_deepgram_api_key(tmp_path) -> 
     assert settings.deepgram_model == DEFAULT_DEEPGRAM_MODEL
 
 
+def test_build_settings_allows_live_audio_model_without_key_when_all_rows_skip_audio(
+    tmp_path,
+) -> None:
+    input_path = tmp_path / "cards.txt"
+    input_path.write_text(
+        "Deck\nEnglish Setence PT\nThat makes sense.;Faz sentido.;x;recognition\n",
+        encoding="utf-8",
+    )
+
+    settings = build_settings(_args(input_path=str(input_path), dry_run=False), env={})
+
+    assert settings.deepgram_api_key is None
+
+
+def test_build_settings_requires_key_when_any_row_needs_audio(tmp_path) -> None:
+    input_path = tmp_path / "cards.txt"
+    input_path.write_text(
+        "\n".join(
+            [
+                "Deck",
+                "English Setence PT",
+                "That makes sense.;Faz sentido.;x;recognition",
+                "Go ahead.;Pode começar.;;production",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError):
+        build_settings(_args(input_path=str(input_path), dry_run=False), env={})
+
+
 def test_build_import_settings_discovers_non_empty_txt_files(
     tmp_path,
     monkeypatch,

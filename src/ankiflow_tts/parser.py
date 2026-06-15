@@ -77,13 +77,18 @@ def parse_input_file(
             field_name: field_value.strip()
             for field_name, field_value in zip(schema.field_names, parts, strict=True)
         }
+        skip_audio = False
         if schema.audio_field is not None:
             audio_value = fields[schema.audio_field]
-            if audio_value:
+            skip_audio = audio_value == "x"
+            if audio_value and not skip_audio:
                 issues.append(
                     ParseIssue(
                         line_number=line_number,
-                        message=f"The audio field '{schema.audio_field}' must be empty.",
+                        message=(
+                            f"The audio field '{schema.audio_field}' must be empty "
+                            "or exactly 'x'."
+                        ),
                     )
                 )
                 continue
@@ -102,10 +107,10 @@ def parse_input_file(
             )
             continue
 
-        tts_text = fields[schema.tts_field] if schema.tts_field is not None else ""
+        tts_text = _resolve_tts_text(schema, fields)
         audio_filename = (
             build_audio_filename(tts_text, tts_model)
-            if schema.requires_audio and tts_text
+            if schema.requires_audio and not skip_audio and tts_text
             else None
         )
         duplicate_source = fields[schema.duplicate_field]
@@ -161,3 +166,55 @@ def _split_model_row(raw_line: str, schema: NoteSchema) -> list[str] | None:
     if len(parts) > field_count:
         return parts[: field_count - 1] + [";".join(parts[field_count - 1 :])]
     return parts
+
+
+def _resolve_tts_text(schema: NoteSchema, fields: dict[str, str]) -> str:
+    if schema.tts_field is None:
+        return ""
+    if schema.model_name == "English Setence PT":
+        notes = fields.get("Notes", "")
+        card_type = notes.split("|", maxsplit=1)[0].strip()
+        if card_type in {
+            "production",
+            "transformation",
+            "repair",
+            "expansion",
+        } and _looks_like_portuguese_prompt(fields["SentenceEN"]):
+            return fields["TranslationPT"]
+    return fields[schema.tts_field]
+
+
+def _looks_like_portuguese_prompt(text: str) -> bool:
+    normalized_text = text.strip().lower()
+    if not normalized_text:
+        return False
+
+    portuguese_prefixes = (
+        "como ",
+        "corrija:",
+        "deixe ",
+        "diga ",
+        "eu ",
+        "expanda ",
+        "o problema ",
+        "pergunte ",
+        "responda ",
+        "transforme ",
+    )
+    if normalized_text.startswith(portuguese_prefixes):
+        return True
+
+    portuguese_markers = (
+        "ção",
+        "ções",
+        "ã",
+        "á",
+        "é",
+        "í",
+        "ó",
+        "ú",
+        "ç",
+        " não ",
+        " você ",
+    )
+    return any(marker in normalized_text for marker in portuguese_markers)

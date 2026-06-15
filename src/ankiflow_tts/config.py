@@ -154,7 +154,23 @@ def _input_requires_audio(input_path: Path) -> bool:
         return False
     model_name = lines[1].strip()
     schema = get_schema(model_name) if model_name else None
-    return bool(schema and schema.requires_audio)
+    if not schema or not schema.requires_audio:
+        return False
+
+    audio_index = schema.audio_index
+    if audio_index is None:
+        return False
+
+    for raw_line in lines[2:]:
+        if not raw_line.strip():
+            continue
+        parts = raw_line.split(";")
+        if len(parts) <= audio_index:
+            continue
+        audio_value = parts[audio_index].strip()
+        if audio_value == "":
+            return True
+    return False
 
 
 def _choose_value(*values: object) -> str | None:

@@ -62,6 +62,32 @@ def test_importer_live_continues_after_row_failures(tmp_path) -> None:
     assert summary.failure_count == 2
 
 
+def test_importer_live_skips_tts_for_x_audio_rows(tmp_path) -> None:
+    input_path = _write_cards(
+        tmp_path / "cards.txt",
+        [
+            "That makes sense.;Faz sentido.;x;recognition",
+            "Go ahead and start without me.;Pode começar sem mim.;;production",
+        ],
+    )
+    anki = FakeAnkiClient(can_add_results=[True, True], note_ids=[101, 102])
+    tts = FakeTtsClient(
+        [
+            AudioPayload(filename="go-ahead.wav", content=b"RIFF----WAVE"),
+        ]
+    )
+    importer = Importer(anki_client=anki, tts_client=tts)
+
+    summary = importer.run(_settings(input_path, dry_run=False))
+
+    assert summary.imported_count == 2
+    assert len(tts.calls) == 1
+    assert tts.calls[0][0] == "Go ahead and start without me."
+    assert anki.stored_media == [anki.added_note_payloads[1].audio_filename]
+    assert anki.added_note_payloads[0].fields["AudioEN"] == ""
+    assert anki.added_note_payloads[1].fields["AudioEN"].startswith("[sound:")
+
+
 def test_importer_stops_before_anki_preflight_on_parse_error(tmp_path) -> None:
     input_path = _write_cards(
         tmp_path / "cards.txt",
@@ -234,6 +260,7 @@ class FakeAnkiClient:
         self.stored_media: list[str] = []
         self.stored_payloads: dict[str, bytes] = {}
         self.added_notes: list[int] = []
+        self.added_note_payloads: list[object] = []
 
     def validate_target(
         self,
@@ -271,6 +298,7 @@ class FakeAnkiClient:
     def add_note(self, note) -> int:
         note_id = self.note_ids.pop(0)
         self.added_notes.append(note_id)
+        self.added_note_payloads.append(note)
         return note_id
 
 

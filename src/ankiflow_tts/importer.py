@@ -66,7 +66,7 @@ class Importer:
 
         if any(
             not state.settings.dry_run
-            and any(row.audio_field_name is not None for row in state.parsed.unique_rows)
+            and any(row.audio_filename is not None for row in state.parsed.unique_rows)
             for state in states
         ) and self.tts_client is None:
             raise ConfigError(
@@ -303,8 +303,10 @@ def prepare_note(row: CardRow, deck_name: str, model_name: str) -> PreparedNote:
     """Convert a parsed row into an Anki note payload."""
 
     fields = dict(row.fields)
-    if row.audio_field_name is not None and row.audio_filename is not None:
-        fields[row.audio_field_name] = f"[sound:{row.audio_filename}]"
+    if row.audio_field_name is not None:
+        fields[row.audio_field_name] = (
+            f"[sound:{row.audio_filename}]" if row.audio_filename is not None else ""
+        )
     return PreparedNote(
         line_number=row.line_number,
         deck_name=deck_name,

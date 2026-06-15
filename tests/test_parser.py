@@ -78,6 +78,70 @@ def test_parse_input_file_handles_utf8_bom(tmp_path) -> None:
     assert parsed.unique_rows[0].sentence_en == "Hello."
 
 
+def test_parse_input_file_allows_x_to_skip_audio_generation(tmp_path) -> None:
+    input_path = tmp_path / "cards.txt"
+    input_path.write_text(
+        "\ufeffDeck\nEnglish Setence PT\nThat makes sense.;Faz sentido.;x;recognition\n",
+        encoding="utf-8",
+    )
+
+    parsed = parse_input_file(
+        input_path,
+        tts_model="model-a",
+    )
+
+    row = parsed.unique_rows[0]
+    assert row.fields["AudioEN"] == "x"
+    assert row.audio_field_name == "AudioEN"
+    assert row.audio_filename is None
+
+
+def test_parse_input_file_uses_answer_for_typed_active_english_cards(tmp_path) -> None:
+    input_path = tmp_path / "cards.txt"
+    input_path.write_text(
+        "\n".join(
+            [
+                "Deck",
+                "English Setence PT",
+                (
+                    "Eu travo quando preciso responder rápido.;"
+                    "I freeze when I need to respond quickly.;;"
+                    "production | learning English | fluency"
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    parsed = parse_input_file(input_path, tts_model="model-a")
+
+    row = parsed.unique_rows[0]
+    assert row.tts_text == "I freeze when I need to respond quickly."
+    assert row.audio_filename is not None
+
+
+def test_parse_input_file_keeps_english_front_as_tts_text_for_existing_files(
+    tmp_path,
+) -> None:
+    input_path = tmp_path / "cards.txt"
+    input_path.write_text(
+        "\n".join(
+            [
+                "Deck",
+                "English Setence PT",
+                "Go ahead and start without me.;Pode começar sem mim.;;production",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    parsed = parse_input_file(input_path, tts_model="model-a")
+
+    row = parsed.unique_rows[0]
+    assert row.tts_text == "Go ahead and start without me."
+    assert row.audio_filename is not None
+
+
 def test_parse_input_file_supports_tag_note_type_with_semicolon_tags(tmp_path) -> None:
     input_path = tmp_path / "tag_cards.txt"
     input_path.write_text(
